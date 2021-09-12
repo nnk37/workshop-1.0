@@ -1,0 +1,245 @@
+---
+title: "ass2niki's"
+author: "Niki"
+date: "06/09/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## *Nike* 
+## **4660593**
+______________________________________________________________________
+# Assignment 2
+
+### Part 1: formatting RMarkdown document  (10 marks)
+______________________________________________________________________
+![photo](/Users/jessicayao/Desktop/n.png)
+
+```{r lib}
+library(tidyverse)
+library(knitr)
+library(skimr)
+library(ggpubr)
+```
+
+### 1. Display the first 10 rows of the dataset using RMarkdown (1 marks)
+```{r q1}
+data<-read.csv('tg.csv', header = TRUE)
+kable(data[1:10,]) 
+```
+
+### 2. Use `fct_reorder` and `parse_number` functions to create a factor variable `family_income`
+```{r q2}
+dat<-subset(data,family_income!="Prefer not to answer")
+datt <- dat %>%
+    mutate(family_income = parse_number(as.character(family_income)))
+summary(datt$family_income)
+
+datt$id <- fct_reorder(as.factor(datt$id),datt$family_income)
+datt$family_income = as.factor(datt$family_income)
+```
+
+### 3. Generate the general statistics of the dataset using `summary()` and `skim()` function (2 mark).
+```{r q3}
+summary(data)
+skim(data)
+```
+
+### 4. What is the number of people who celebrate?
+```{r q4}
+data %>%
+  count(celebrate, sort = "TRUE") %>%
+  kable()
+#The number of people who celebrate is 980
+```
+
+### 5. What are categories and stats for each main dish served and the method it is prepared?
+```{r q5}
+#main dish served
+dish_categories <- unique(data$main_dish)
+kable(dish_categories)
+summary(data$main_dish)
+#method it is prepared
+prep_categories <- unique(data$main_prep)
+kable(prep_categories)
+summary(data$main_prep)
+```
+
+### 6. Create a data viz showing this in the most evident way. Provide your own legend and use themes.
+```{r q6}
+data1 <- data %>%
+  group_by(main_dish) %>%
+  tally()
+data1 %>%
+  group_by(main_dish) %>%
+  ungroup() %>%
+  ggplot(aes(main_dish, n)) +
+  geom_col() +
+  coord_flip() +
+  theme_classic()+
+  labs(x="Main dish type", y="Number of people", title="Number of people with different main dishes", caption="Image 1: Bar Graph")
+
+
+data2 <- data %>%
+  group_by(main_prep) %>%
+  tally()
+data2 %>%
+  group_by(main_prep) %>%
+  ungroup() %>%
+  ggplot(aes(main_prep, n)) +
+  geom_col() +
+  coord_flip() +
+  theme_classic()+
+  labs(x="Preparation Method", y="Number of people", title="Number of people with different preparation methods", caption="Image 2: Bar Graph")
+```
+### 7. How many use cranberry sauce? How many use gravy?
+```{r q7}
+data %>%
+  count(cranberry, sort = "TRUE") %>%
+  kable()
+#The number of people who use canned cranberry is 502, homemade cranberry is 301, other cranberry is 26
+
+data %>%
+  count(gravy, sort = "TRUE") %>%
+  kable()
+#The number of people who use gravy is 892
+```
+
+### 8. What is the distribution of those who celebrate across income ranges
+```{r q8}
+cel_in<- datt %>% 
+  filter(celebrate == "Yes")
+
+k<-cel_in%>%
+  group_by(family_income) %>%
+  tally()
+kable(k)
+```
+
+### 9. Present this information in the most evident way on the data viz.
+```{r q9}
+k %>%
+  group_by(family_income) %>%
+  ungroup() %>%
+  ggplot(aes(family_income,n)) +
+  geom_col() +
+  theme_classic()+
+  labs(x="Income range", y="Number of people", title="Distribution of people who celebrate across income ranges", caption="Image 3: Distribution Graph")
+```
+### 10. What are the most common pies, sides, and desserts?
+```{r q10}
+#pumpkin for pie
+pie_freq <- apply(data[,27:39], 2, table)
+#Mashed potatoes for sides
+side_freq <- apply(data[,12:26], 2, table)
+#None for desserts
+dessert_freq <- apply(data[,40:51], 2, table)
+kable(dessert_freq)
+#Pumpkin, Mashed potatoes and None are the most common pies, sides, and desserts respectively
+```
+
+### 11. Present this information on a data viz
+```{r q11}
+#Pie type distribution
+pie_freq <- apply(data[,27:38], 2, table)
+pie1<-as.data.frame(t(bind_rows((pie_freq))))
+pie2 <- cbind(pie_type = rownames(pie1), pie1)
+pie3<-pie2%>%
+  mutate(pie_type =dplyr::recode(pie_type,
+                              'pie1' = 'Apple' ,
+                              'pie2' = 'Buttermilk',
+                              'pie3' ='Cherry',
+                              'pie4' = 'Chocolate',
+                              'pie5' = 'Coconut cream',
+                              'pie6' = 'Key lime',
+                              'pie7' = 'Peach',
+                              'pie8' = 'Pecan',
+                              'pie9' = 'Pumpkin',
+                              'pie10' = 'Sweet Potato',
+                              'pie11' = 'None',
+                              .default = 'Others'))
+pie3 %>%
+  ggplot(aes(V1, pie_type)) +
+  geom_col() +
+  theme_classic()+
+  labs(x="Number of people", y="Types of pie", title="Distribution of pie type", caption="Image 4: Distribution Graph")
+
+#side type distribution
+side_freq <- apply(data[,12:25], 2, table)
+side1<-as.data.frame(t(bind_rows((side_freq))))
+side2 <- cbind(side_type = rownames(side1), side1)
+side3<-side2%>%
+  mutate(side_type =dplyr::recode(side_type,
+                              'side1' = 'Brussel sprouts' ,
+                              'side2' = 'Carrots',
+                              'side3' ='Cauliflower',
+                              'side4' = 'Corn',
+                              'side5' = 'Cornbread',
+                              'side6' = 'Fruit salad',
+                              'side7' = 'Green beans/green bean casserole',
+                              'side8' = 'Macaroni and cheese',
+                              'side9' = 'Mashed potatoes',
+                              'side10' = 'Rolls/biscuits',
+                              'side11' = 'Squash',
+                              'side12' = 'Vegetable salad',
+                              'side13' = 'Yams/sweet potato casserole',
+                              .default = 'Others'))
+side3 %>%
+  ggplot(aes(V1, side_type)) +
+  geom_col() +
+  theme_classic()+
+  labs(x="Number of people", y="Types of side", title="Distribution of side type", caption="Image 5: Distribution Graph")
+
+#dessert type distribution
+dessert_freq <- apply(data[,40:50], 2, table)
+dessert1<-as.data.frame(t(bind_rows((dessert_freq))))
+dessert2 <- cbind(dessert_type = rownames(dessert1), dessert1)
+dessert3<-dessert2%>%
+  mutate(dessert_type =dplyr::recode(dessert_type,
+                              'dessert1' = 'Apple cobbler' ,
+                              'dessert2' = 'Blondies',
+                              'dessert3' ='Brownies',
+                              'dessert4' = 'Carrot cake',
+                              'dessert5' = 'Cheesecake',
+                              'dessert6' = 'Cookies',
+                              'dessert7' = 'Fudge',
+                              'dessert8' = 'Ice cream',
+                              'dessert9' = 'Peach cobbler',
+                              'dessert10' = 'None',
+                              .default = 'Others'))
+dessert3 %>%
+  ggplot(aes(V1, dessert_type)) +
+  geom_col() +
+  theme_classic()+
+  labs(x="Number of people", y="Types of dessert", title="Distribution of dessert type", caption="Image 6: Distribution Graph")
+```
+
+### 13. How do the servings differ by income?
+```{r q13}
+da <- datt %>%
+  group_by(family_income,main_dish) %>%
+  tally()
+kable(da)
+```
+
+### 14. Present this information on a data viz
+```{r q14}
+da <- datt %>%
+  group_by(family_income,main_dish) %>%
+  tally()
+
+ggplot(da, aes(main_dish,n,colour = main_dish)) +
+  geom_point(size = 1) +
+  facet_wrap(~family_income)+
+  theme(axis.text.x = element_text(angle=90, hjust=1)) +
+  labs(x="main_dish", y="number", colour="Income group", 
+       title="Main dish for different income group", caption="Image 7")
+```
+
+
+
+
+
